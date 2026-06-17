@@ -6,7 +6,7 @@ using namespace std;
 // часть Б
 class Microorganism {
 private:
-    char* name;
+    char* name;
     double size;
     static double minSize;
 
