@@ -7,40 +7,40 @@ using namespace std;
 class Microorganism {
 private:
     char* name;
-    double size;
-    static double minSize;
+    double size;
+    static double minSize;
 
 public:
-    Microorganism(const char* n, double s) : size(s) {
-        name = new char[strlen(n) + 1];
-        strcpy(name, n);
-        if (s < minSize) minSize = s;
-    }
-    
-    virtual ~Microorganism() {
-        delete[] name;
-    }
-    
-    virtual void show() const {
-        cout << name << size << " mkm";
-    }
-    
-    virtual const char* getType() const {
-        return "Microorganism";
-    }
-    
-    static double getMinSize() {
-        return minSize;
-    }
+    Microorganism(const char* n, double s) : size(s) {
+        name = new char[strlen(n) + 1];
+        strcpy(name, n);
+        if (s < minSize) minSize = s;
+    }
+
+    virtual ~Microorganism() {
+        delete[] name;
+    }
+
+    virtual void show() const {
+        cout << name << size << " mkm";
+    }
+
+    virtual const char* getType() const {
+        return "Microorganism";
+    }
+
+    static double getMinSize() {
+        return minSize;
+    }
 };
 
 double Microorganism::minSize = 999999;
 
 class Bacteria : public Microorganism {
 private:
-    char* shape;
+    char* shape;
 public:
-    Bacteria(const char* n, double s, const char* sh) : Microorganism(n, s) {
+    Bacteria(const char* n, double s, const char* sh) : Microorganism(n, s) {
         shape = new char[strlen(sh) + 1];
         strcpy(shape, sh);
     }
