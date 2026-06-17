@@ -17,6 +17,11 @@ public:
         if (s < minSize) minSize = s;
     }
 
+    Microorganism(const Microorganism& other) : size(other.size) {
+        name = new char[strlen(other.name) + 1];
+        strcpy(name, other.name);
+    }
+
     virtual ~Microorganism() {
         delete[] name;
     }
@@ -32,6 +37,10 @@ public:
     static double getMinSize() {
         return minSize;
     }
+    
+    virtual Microorganism* clone() const {
+        return new Microorganism(*this);
+    }
 };
 
 double Microorganism::minSize = 999999;
@@ -41,273 +50,343 @@ private:
     char* shape;
 public:
     Bacteria(const char* n, double s, const char* sh) : Microorganism(n, s) {
-        shape = new char[strlen(sh) + 1];
-        strcpy(shape, sh);
-    }
-    
-    ~Bacteria() {
-        delete[] shape;
-    }
-    
-    void show() const override {
-        cout << "[Bacteria] " << getType() << ", shape: " << shape;
-    }
-    
-    const char* getType() const override {
-        return "Bacteria";
-    }
+        shape = new char[strlen(sh) + 1];
+        strcpy(shape, sh);
+    }
+
+    Bacteria(const Bacteria& other) : Microorganism(other) {
+        shape = new char[strlen(other.shape) + 1];
+        strcpy(shape, other.shape);
+    }
+
+    ~Bacteria() {
+        delete[] shape;
+    }
+
+    void show() const override {
+        cout << "[Bacteria] " << getType() << ", shape: " << shape;
+    }
+
+    const char* getType() const override {
+        return "Bacteria";
+    }
+    
+    Microorganism* clone() const override {
+        return new Bacteria(*this);
+    }
 };
 
 class Virus : public Microorganism {
 private:
-    bool hasRNA;
+    bool hasRNA;
 public:
-    Virus(const char* n, double s, bool rna) : Microorganism(n, s), hasRNA(rna) {}
-    
-    void show() const override {
-        cout << "[Virus] " << getType() << ", RNA: " << (hasRNA ? "yes" : "no");
-    }
-    
-    const char* getType() const override {
-        return "Virus";
-    }
+    Virus(const char* n, double s, bool rna) : Microorganism(n, s), hasRNA(rna) {}
+
+    Virus(const Virus& other) : Microorganism(other), hasRNA(other.hasRNA) {}
+
+    void show() const override {
+        cout << "[Virus] " << getType() << ", RNA: " << (hasRNA ? "yes" : "no");
+    }
+
+    const char* getType() const override {
+        return "Virus";
+    }
+    
+    Microorganism* clone() const override {
+        return new Virus(*this);
+    }
 };
 
 // часть А
 class CharList {
 private:
-    struct Node {
-        char data;
-        Node* next;
-        Node(char val) : data(val), next(nullptr) {}
-    };
-    
-    Node* head;
-    int count;
-    
+    struct Node {
+        char data;
+        Node* next;
+        Node(char val) : data(val), next(nullptr) {}
+    };
+
+    Node* head;
+    int count;
+
 public:
-    CharList() : head(nullptr), count(0) {}
-    
-    ~CharList() {
-        while (head) {
-            Node* temp = head;
-            head = head->next;
-            delete temp;
-        }
-    }
-    
-    void addToEnd(char val) {
-        Node* newNode = new Node(val);
-        if (!head) {
-            head = newNode;
-        } else {
-            Node* curr = head;
-            while (curr->next) curr = curr->next;
-            curr->next = newNode;
-        }
-        count++;
-    }
-    
-    void removeFromEnd() {
-        if (!head) return;
-        if (!head->next) {
-            delete head;
-            head = nullptr;
-        } else {
-            Node* curr = head;
-            while (curr->next->next) curr = curr->next;
-            delete curr->next;
-            curr->next = nullptr;
-        }
-        count--;
-    }
-    
-    CharList operator+(char item) const {
-        CharList result = *this;
-        result.addToEnd(item);
-        return result;
-    }
-    
-    CharList& operator--(int) {
-        removeFromEnd();
-        return *this;
-    }
-    
-    bool operator!=(const CharList& other) const {
-        if (count != other.count) return true;
-        
-        Node* a = head;
-        Node* b = other.head;
-        
-        while (a && b) {
-            if (a->data != b->data) return true;
-            a = a->next;
-            b = b->next;
-        }
-        return false;
-    }
-    
-    void print() const {
-        Node* curr = head;
-        while (curr) {
-            cout << curr->data << " ";
-            curr = curr->next;
-        }
-        cout << endl;
-    }
-    
-    int size() const { return count; }
+    CharList() : head(nullptr), count(0) {}
+
+    CharList(const CharList& other) : head(nullptr), count(0) {
+        Node* curr = other.head;
+        while (curr) {
+            addToEnd(curr->data);
+            curr = curr->next;
+        }
+    }
+
+    ~CharList() {
+        while (head) {
+            Node* temp = head;
+            head = head->next;
+            delete temp;
+        }
+    }
+
+    CharList& operator=(const CharList& other) {
+        if (this != &other) {
+            while (head) {
+                Node* temp = head;
+                head = head->next;
+                delete temp;
+            }
+            count = 0;
+            
+            Node* curr = other.head;
+            while (curr) {
+                addToEnd(curr->data);
+                curr = curr->next;
+            }
+        }
+        return *this;
+    }
+
+    void addToEnd(char val) {
+        Node* newNode = new Node(val);
+        if (!head) {
+            head = newNode;
+        } else {
+            Node* curr = head;
+            while (curr->next) curr = curr->next;
+            curr->next = newNode;
+        }
+        count++;
+    }
+
+    void removeFromEnd() {
+        if (!head) return;
+        if (!head->next) {
+            delete head;
+            head = nullptr;
+        } else {
+            Node* curr = head;
+            while (curr->next->next) curr = curr->next;
+            delete curr->next;
+            curr->next = nullptr;
+        }
+        count--;
+    }
+
+    CharList operator+(char item) const {
+        CharList result = *this;
+        result.addToEnd(item);
+        return result;
+    }
+
+    CharList& operator--(int) {
+        removeFromEnd();
+        return *this;
+    }
+
+    bool operator!=(const CharList& other) const {
+        if (count != other.count) return true;
+
+        Node* a = head;
+        Node* b = other.head;
+
+        while (a && b) {
+            if (a->data != b->data) return true;
+            a = a->next;
+            b = b->next;
+        }
+        return false;
+    }
+
+    void print() const {
+        Node* curr = head;
+        while (curr) {
+            cout << curr->data << " ";
+            curr = curr->next;
+        }
+        cout << endl;
+    }
+
+    int size() const { return count; }
 };
 
-// частрь С
+// частрь С 
 class MicroList {
 private:
-    struct Node {
-        Microorganism* data;
-        Node* next;
-        Node(Microorganism* val) : data(val), next(nullptr) {}
-    };
-    
-    Node* head;
-    int count;
-    
+    struct Node {
+        Microorganism* data;
+        Node* next;
+        Node(Microorganism* val) : data(val), next(nullptr) {}
+    };
+
+    Node* head;
+    int count;
+
 public:
-    MicroList() : head(nullptr), count(0) {}
-    
-    ~MicroList() {
-        while (head) {
-            Node* temp = head;
-            head = head->next;
-            delete temp;
-        }
-    }
-    
-    void addToEnd(Microorganism* val) {
-        Node* newNode = new Node(val);
-        if (!head) {
-            head = newNode;
-        } else {
-            Node* curr = head;
-            while (curr->next) curr = curr->next;
-            curr->next = newNode;
-        }
-        count++;
-    }
-    
-    void removeFromEnd() {
-        if (!head) return;
-        if (!head->next) {
-            delete head;
-            head = nullptr;
-        } else {
-            Node* curr = head;
-            while (curr->next->next) curr = curr->next;
-            delete curr->next;
-            curr->next = nullptr;
-        }
-        count--;
-    }
-    
-    MicroList operator+(Microorganism* item) const {
-        MicroList result = *this;
-        result.addToEnd(item);
-        return result;
-    }
-    
-    MicroList& operator--(int) {
-        removeFromEnd();
-        return *this;
-    }
-    
-    bool operator!=(const MicroList& other) const {
-        if (count != other.count) return true;
-        
-        Node* a = head;
-        Node* b = other.head;
-        
-        while (a && b) {
-            if (a->data != b->data) return true;
-            a = a->next;
-            b = b->next;
-        }
-        return false;
-    }
-    
-    void print() const {
-        Node* curr = head;
-        while (curr) {
-            curr->data->show();
-            cout << " ";
-            curr = curr->next;
-        }
-        cout << endl;
-    }
-    
-    int size() const { return count; }
+    MicroList() : head(nullptr), count(0) {}
+
+    MicroList(const MicroList& other) : head(nullptr), count(0) {
+        Node* curr = other.head;
+        while (curr) {
+            addToEnd(curr->data->clone()); 
+            curr = curr->next;
+        }
+    }
+
+    ~MicroList() {
+        while (head) {
+            Node* temp = head;
+            head = head->next;
+            delete temp->data; 
+            delete temp;
+        }
+    }
+
+    MicroList& operator=(const MicroList& other) {
+        if (this != &other) {
+            while (head) {
+                Node* temp = head;
+                head = head->next;
+                delete temp->data;
+                delete temp;
+            }
+            count = 0;
+            
+            Node* curr = other.head;
+            while (curr) {
+                addToEnd(curr->data->clone());
+                curr = curr->next;
+            }
+        }
+        return *this;
+    }
+
+    void addToEnd(Microorganism* val) {
+        Node* newNode = new Node(val->clone()); 
+        if (!head) {
+            head = newNode;
+        } else {
+            Node* curr = head;
+            while (curr->next) curr = curr->next;
+            curr->next = newNode;
+        }
+        count++;
+    }
+
+    void removeFromEnd() {
+        if (!head) return;
+        if (!head->next) {
+            delete head->data;
+            delete head;
+            head = nullptr;
+        } else {
+            Node* curr = head;
+            while (curr->next->next) curr = curr->next;
+            delete curr->next->data;
+            delete curr->next;
+            curr->next = nullptr;
+        }
+        count--;
+    }
+
+    MicroList operator+(Microorganism* item) const {
+        MicroList result = *this;
+        result.addToEnd(item);
+        return result;
+    }
+
+    MicroList& operator--(int) {
+        removeFromEnd();
+        return *this;
+    }
+
+    bool operator!=(const MicroList& other) const {
+        if (count != other.count) return true;
+
+        Node* a = head;
+        Node* b = other.head;
+
+        while (a && b) {
+            if (a->data != b->data) return true;
+            a = a->next;
+            b = b->next;
+        }
+        return false;
+    }
+
+    void print() const {
+        Node* curr = head;
+        while (curr) {
+            curr->data->show();
+            cout << " ";
+            curr = curr->next;
+        }
+        cout << endl;
+    }
+
+    int size() const { return count; }
 };
 
-
 int main() {
-    cout << "часть а" << endl;
-    
-    CharList list1, list2;
-    
-    list1.addToEnd('A');
-    list1.addToEnd('B');
-    list1.addToEnd('C');
-    
-    cout << "list1: ";
-    list1.print();
-    
-    list2 = list1 + 'D';
-    cout << "list2 = list1 + 'D': ";
-    list2.print();
-    
-    list2--;
-    cout << "list2 после --: ";
-    list2.print();
-    
-    cout << "list1 != list2 " << (list1 != list2 ? "ДА" : "НЕТ") << endl;
-    
-    CharList list3 = list1;
-    cout << "list3 = list1: ";
-    list3.print();
-    cout << "list1 != list3 " << (list1 != list3 ? "ДА" : "НЕТ") << endl;
-    
-    cout << "часть б" << endl;
-    
-    Bacteria bac("E.Coli", 2.5, "rod");
-    Virus vir("HIV", 0.12, true);
-    Bacteria bac2("Staph", 1.0, "coccus");
-    
-    cout << "Объект 1: "; bac.show(); cout << endl;
-    cout << "Тип: " << bac.getType() << endl << endl;
-    
-    cout << "Объект 2: "; vir.show(); cout << endl;
-    cout << "Тип: " << vir.getType() << endl << endl;
-    
-    cout << "Минимальный размер среди всех микроорганизмов: ";
-    cout << Microorganism::getMinSize() << " mkm" << endl;
-    
-    cout << "часть с" << endl;
-    
-    MicroList microList;
-    
-    microList.addToEnd(&bac);
-    microList.addToEnd(&vir);
-    
-    cout << "Исходный список микроорганизмов: ";
-    microList.print();
-    
-    MicroList microList2 = microList + &bac2;
-    cout << "microList2 = microList + bac2: ";
-    microList2.print();
-    
-    microList2--;
-    cout << "microList2 после --: ";
-    microList2.print();
-    
-    cout << "microList != microList2 " << (microList != microList2 ? "ДА" : "НЕТ") << endl;
-    
-    return 0;
+    cout << "часть а" << endl;
+
+    CharList list1, list2;
+
+    list1.addToEnd('A');
+    list1.addToEnd('B');
+    list1.addToEnd('C');
+
+    cout << "list1: ";
+    list1.print();
+
+    list2 = list1 + 'D';
+    cout << "list2 = list1 + 'D': ";
+    list2.print();
+
+    list2--;
+    cout << "list2 после --: ";
+    list2.print();
+
+    cout << "list1 != list2 " << (list1 != list2 ? "ДА" : "НЕТ") << endl;
+
+    CharList list3 = list1;
+    cout << "list3 = list1: ";
+    list3.print();
+    cout << "list1 != list3 " << (list1 != list3 ? "ДА" : "НЕТ") << endl;
+
+    cout << "часть б" << endl;
+
+    Bacteria bac("E.Coli", 2.5, "rod");
+    Virus vir("HIV", 0.12, true);
+    Bacteria bac2("Staph", 1.0, "coccus");
+
+    cout << "Объект 1: "; bac.show(); cout << endl;
+    cout << "Тип: " << bac.getType() << endl << endl;
+
+    cout << "Объект 2: "; vir.show(); cout << endl;
+    cout << "Тип: " << vir.getType() << endl << endl;
+
+    cout << "Минимальный размер среди всех микроорганизмов: ";
+    cout << Microorganism::getMinSize() << " mkm" << endl;
+
+    cout << "часть с" << endl;
+
+    MicroList microList;
+
+    microList.addToEnd(&bac);
+    microList.addToEnd(&vir);
+
+    cout << "Исходный список микроорганизмов: ";
+    microList.print();
+
+    MicroList microList2 = microList + &bac2;
+    cout << "microList2 = microList + bac2: ";
+    microList2.print();
+
+    microList2--;
+    cout << "microList2 после --: ";
+    microList2.print();
+
+    cout << "microList != microList2 " << (microList != microList2 ? "ДА" : "НЕТ") << endl;
+
+    return 0;
 }
